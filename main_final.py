@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 import keras.backend as K
 import tensorflow as tf
 
+global transaction_cost = 0.0005
 
 def sharpe_loss(returns, y_pred):
     # make all time-series start at 1
@@ -30,7 +31,7 @@ def sharpe_loss(returns, y_pred):
     # value of the portfolio after allocations applied
 
     portfolio_returns = tf.reduce_sum(tf.multiply(returns, y_pred), axis=1)
-    costs = tf.concat([tf.zeros((1,)), 0.0005 * tf.reduce_sum(tf.abs(y_pred[1:] - y_pred[:-1]), axis=1)], axis=0)
+    costs = tf.concat([tf.zeros((1,)), transaction_cost * tf.reduce_sum(tf.abs(y_pred[1:] - y_pred[:-1]), axis=1)], axis=0)
     portfolio_returns = portfolio_returns - costs
 
     sharpe = K.mean(portfolio_returns) / K.std(portfolio_returns) * np.sqrt(252)
@@ -57,7 +58,7 @@ def soft_target_simple(returns, y_pred):
     # value of the portfolio after allocations applied
 
     portfolio_returns = tf.reduce_sum(tf.multiply(returns, y_pred), axis=1)
-    costs = tf.concat([tf.zeros((1,)), 0.0005 * tf.reduce_sum(tf.abs(y_pred[1:] - y_pred[:-1]), axis=1)], axis=0)
+    costs = tf.concat([tf.zeros((1,)), transaction_cost * tf.reduce_sum(tf.abs(y_pred[1:] - y_pred[:-1]), axis=1)], axis=0)
     portfolio_returns = portfolio_returns - costs
     volat = K.std(portfolio_returns) * np.sqrt(252)
 
@@ -451,47 +452,28 @@ if __name__ == '__main__':
                  'GE', 'GS', 'HD', 'INTC', 'IBM', 'JPM', 'JNJ', 'MCD', 'MRK', 'MSFT',
                  'NKE', 'PFE', 'PG', 'TRV', 'RTX', 'UNH', 'VZ', 'V', 'WMT', 'DIS']
 
-    simulation = Simulation(2011, 2024, 'p1 sharpe 64 cont/', loss=sharpe_loss, batch_size=64, assets=assets_old, rebalance=4)
+    global transaction_cost = 0
+    simulation = Simulation(2008, 2024, 'p1 sharpe 64 c0/', loss=sharpe_loss, batch_size=64, assets=assets_old, rebalance=4)
     simulation.simulate()
 
-    simulation = Simulation(2008, 2024, 'p3 sharpe 64/', loss=sharpe_loss, batch_size=64, assets=assets_full_diverse,
-                            rebalance=4)
+    simulation = Simulation(2008, 2024, 'p1 vol 64 c0/', loss=soft_target_simple, batch_size=64, assets=assets_old, rebalance=4)
     simulation.simulate()
 
-    simulation = Simulation(2008, 2024, 'p1 vol 64/', loss=soft_target_simple, batch_size=64, assets=assets_old,
-                            rebalance=4)
+    simulation = Simulation(2008, 2024, 'p3 sharpe 64 c0/', loss=sharpe_loss, batch_size=64, assets=assets_full_diverse, rebalance=4)
     simulation.simulate()
 
-    simulation = Simulation(2008, 2024, 'p3 vol 64/', loss=soft_target_simple, batch_size=64, assets=assets_full_diverse,
-                            rebalance=4)
+    simulation = Simulation(2008, 2024, 'p3 vol 64 c0/', loss=soft_target_simple, batch_size=64, assets=assets_full_diverse, rebalance=4)
     simulation.simulate()
 
-    simulation = Simulation(2008, 2024, 'p1 sharpe 96/', loss=sharpe_loss, batch_size=96, assets=assets_old,
-                            rebalance=4)
+    global transaction_cost = 0.1
+    simulation = Simulation(2008, 2024, 'p1 sharpe 64 c1/', loss=sharpe_loss, batch_size=64, assets=assets_old, rebalance=4)
     simulation.simulate()
 
-    simulation = Simulation(2008, 2024, 'p1 sharpe 128/', loss=sharpe_loss, batch_size=128, assets=assets_old, rebalance=4)
+    simulation = Simulation(2008, 2024, 'p1 vol 64 c1/', loss=soft_target_simple, batch_size=64, assets=assets_old, rebalance=4)
     simulation.simulate()
 
-    simulation = Simulation(2008, 2024, 'p1 sharpe 256/', loss=sharpe_loss, batch_size=256, assets=assets_old, rebalance=4)
+    simulation = Simulation(2008, 2024, 'p3 sharpe 64 c1/', loss=sharpe_loss, batch_size=64, assets=assets_full_diverse, rebalance=4)
     simulation.simulate()
 
-    simulation = Simulation(2008, 2024, 'p1 vol 96/', loss=soft_target_simple, batch_size=96, assets=assets_old,
-                            rebalance=4)
-    simulation.simulate()
-
-    simulation = Simulation(2008, 2024, 'p1 vol 128/', loss=soft_target_simple, batch_size=128, assets=assets_old,
-                            rebalance=4)
-    simulation.simulate()
-
-    simulation = Simulation(2008, 2024, 'p1 vol 256/', loss=soft_target_simple, batch_size=256, assets=assets_old,
-                            rebalance=4)
-    simulation.simulate()
-
-    simulation = Simulation(2008, 2024, 'p2 sharpe 64/', loss=sharpe_loss, batch_size=64, assets=assets_no_bonds,
-                            rebalance=4)
-    simulation.simulate()
-
-    simulation = Simulation(2008, 2024, 'p2 vol 64/', loss=sharpe_loss, batch_size=64, assets=assets_no_bonds,
-                            rebalance=4)
+    simulation = Simulation(2008, 2024, 'p3 vol 64 c1/', loss=soft_target_simple, batch_size=64, assets=assets_full_diverse, rebalance=4)
     simulation.simulate()
