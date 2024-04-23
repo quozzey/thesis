@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 import keras.backend as K
 import tensorflow as tf
 
-global transaction_cost = 0.0005
+global transaction_cost
 
 def sharpe_loss(returns, y_pred):
     # make all time-series start at 1
@@ -452,7 +452,7 @@ if __name__ == '__main__':
                  'GE', 'GS', 'HD', 'INTC', 'IBM', 'JPM', 'JNJ', 'MCD', 'MRK', 'MSFT',
                  'NKE', 'PFE', 'PG', 'TRV', 'RTX', 'UNH', 'VZ', 'V', 'WMT', 'DIS']
 
-    global transaction_cost = 0
+    transaction_cost = 0
     simulation = Simulation(2008, 2024, 'p1 sharpe 64 c0/', loss=sharpe_loss, batch_size=64, assets=assets_old, rebalance=4)
     simulation.simulate()
 
@@ -465,7 +465,7 @@ if __name__ == '__main__':
     simulation = Simulation(2008, 2024, 'p3 vol 64 c0/', loss=soft_target_simple, batch_size=64, assets=assets_full_diverse, rebalance=4)
     simulation.simulate()
 
-    global transaction_cost = 0.1
+    transaction_cost = 0.1
     simulation = Simulation(2008, 2024, 'p1 sharpe 64 c1/', loss=sharpe_loss, batch_size=64, assets=assets_old, rebalance=4)
     simulation.simulate()
 
