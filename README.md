@@ -58,3 +58,10 @@ ii) also there, as stock_lists pass your asset tickers list INSIDE SQUARE BRACKE
 iii) Change the weights in equally weighted portfolio by dividing by length of the tickers list.
 
 Obviously, you also have to change the LSTM models that are being loaded.
+
+
+
+RUN TIME
+=====================================
+1. MODEL TRAINING: with 4 recalculations per year and 10 years of testing my run time was about 2 - 2.5 hours to calculate all 40 models.
+2. RESULTS GENERATION: running results.py as it is right now should give results in about 5 minutes.
