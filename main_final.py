@@ -6,6 +6,7 @@ import datetime
 import os
 from Model import Trade_Model
 from dateutil.relativedelta import relativedelta
+from scipy.stats import norm, skew, kurtosis
 
 
 class Simulation:
@@ -37,7 +38,7 @@ class Simulation:
                 cols_per_stock = 50
 
                 train_full, train_price_full, test_full, test_price_full, stock_list = \
-                    download_and_process_data(train_start=pd.to_datetime('2008-06-01'),
+                    load_data(train_start=pd.to_datetime('2008-06-01'),
                                               train_end=pd.to_datetime(trade_start),
                                               test_start=pd.to_datetime(trade_start),
                                               test_end=pd.to_datetime(trade_start) + relativedelta(months=12//self.rebalance), cols_per_stock=cols_per_stock,
@@ -123,6 +124,19 @@ def portfolio_performance(portfolio_value, save_path):
         f.write('Sortino Ratio: {n:.3f}\n'.format(n=np.mean(daily_returns) / downside_devation * np.sqrt(252)))
         f.write('Information ratio*: {n:.3f}\n'.format(n=arc / volatility / np.sqrt(252)))
         f.write('Information ratio**: {n:.3f}\n'.format(n=arc ** 2 * np.sign(arc) / (volatility * np.sqrt(252)) / max_drawdown))
+
+
+def statistic(portfolio_value, bench_value):
+    daily_returns = portfolio_value[1:] / portfolio_value[:-1] - 1
+    volatility = np.std(daily_returns)
+    shr = np.mean(daily_returns) / volatility * np.sqrt(252)
+
+    daily_returns_bench = bench_value[1:] / bench_value[:-1] - 1
+    volatility_bench = np.std(daily_returns_bench)
+    shr_bench = np.mean(daily_returns_bench) / volatility_bench * np.sqrt(252)
+
+    return norm.cdf((shr - shr_bench)*np.sqrt(len(portfolio_value) - 1) / np.sqrt(1 - skew(daily_returns) * shr +
+                                                                                  0.25 * (kurtosis(daily_returns) - 1) * shr_bench**2))
 
 
 def download_and_process_data(train_start, train_end, test_start, test_end, cols_per_stock, n_comp=None, download_start_shift=0, stock_lists=None, path='', return_dates = False):
@@ -263,6 +277,7 @@ def load_data(train_start, train_end, test_start, test_end, cols_per_stock, n_co
     test_price_full.drop(columns=['close'], inplace=True)
     technicals_list = [('^VIX', 'close_1_roc'), ('^IRX', 'close'), ('^FVX', 'close')]
     technicals_data = pd.read_csv('indicators.csv', header=[0, 1], index_col=0)
+    technicals_data.index = pd.to_datetime(technicals_data.index)
 
     for tpl in technicals_list:
         symbol, feat = tpl
@@ -299,24 +314,24 @@ def load_data(train_start, train_end, test_start, test_end, cols_per_stock, n_co
 
 
 if __name__ == '__main__':
-    assets = ['IVV', 'IJH', 'IJR', 'TLT', 'IEF', 'SHY', 'IYZ', 'IYK', 'IYC', 'IYE', 'IYF', 'IYH', 'ITA',
+    assets1 = ['IVV', 'IJH', 'IJR', 'TLT', 'IEF', 'SHY', 'IYZ', 'IYK', 'IYC', 'IYE', 'IYF', 'IYH', 'ITA',
               'IYJ',
               'IYM', 'IYR', 'IYW', 'IDU']
-    assets_no_bonds = ['IVV', 'IJH', 'IJR', 'IYZ', 'IYK', 'IYC', 'IYE', 'IYF', 'IYH', 'ITA', 'IYJ',
+    assets2 = ['IVV', 'IJH', 'IJR', 'IYZ', 'IYK', 'IYC', 'IYE', 'IYF', 'IYH', 'ITA', 'IYJ',
                        'IYM', 'IYR', 'IYW', 'IDU']
-    assets_diverse = ['IVV', 'IJH', 'IJR', 'IYK', 'IYC', 'IYH', 'IYW', 'IDU', 'GC=F', 'CL=F', 'HG=F', 'JPY=X', 'CHF=X',
-                      'AUD=X', 'IEF']
-    assets_div_limited = ['IVV', 'IJH', 'IJR', 'IEF', 'GC=F', 'CL=F', 'HG=F', 'JPY=X', 'CHF=X', 'AUD=X']
-    assets_full_diverse = ['IEF', 'IYZ', 'IYK', 'IYC', 'IYE', 'IYF', 'IYH', 'ITA', 'IYJ', 'IYM', 'IYR', 'IYW', 'IDU',
+
+    assets3 = ['IEF', 'IYZ', 'IYK', 'IYC', 'IYE', 'IYF', 'IYH', 'ITA', 'IYJ', 'IYM', 'IYR', 'IYW', 'IDU',
                            'GC=F', 'CL=F', 'HG=F',
                            'ZC=F', 'KC=F']
 
-    dow_jones = ['MMM', 'AXP', 'T', 'BA', 'CAT', 'CVX', 'CSCO', 'KO', 'DD', 'XOM',
-                 'GE', 'GS', 'HD', 'INTC', 'IBM', 'JPM', 'JNJ', 'MCD', 'MRK', 'MSFT',
-                 'NKE', 'PFE', 'PG', 'TRV', 'RTX', 'UNH', 'VZ', 'V', 'WMT', 'DIS']
-
-    simulation = Simulation(2014, 2024, '3 pct target test/', assets=assets, rebalance=4, batch_size=64)
+    simulation = Simulation(2014, 2024, 'vol long only1/', assets=assets1, rebalance=4, batch_size=64, t_cost=0.0005)
     simulation.simulate()
+
+    #simulation = Simulation(2014, 2024, 'shr long only2/', assets=assets2, rebalance=4, batch_size=64)
+    #simulation.simulate()
+
+    #simulation = Simulation(2014, 2024, 'shr long only3/', assets=assets3, rebalance=4, batch_size=64)
+    #simulation.simulate()
 
     #simulation = Simulation(2023, 2024, 'vol 256/', assets=assets, rebalance=4, batch_size=256)
     #simulation.simulate()

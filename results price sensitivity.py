@@ -195,4 +195,4 @@ for j, model in enumerate(models):
 # plt.legend(['S&P500', 'DJIA', 'EWP', 'Mean-Var', 'LSTM-ShR', 'LSTM-Min-Vol'])
 # plt.grid(ls='--', which='both')
 
-plt.show()
+#plt.show()

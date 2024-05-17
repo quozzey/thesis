@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from keras.layers import LSTM, Flatten, Dense, Input, Lambda, Dropout
+from keras.layers import LSTM, Flatten, Dense, Input, Lambda, Dropout, Softmax
 from keras import Model
 import keras.backend as K
 from keras.optimizers import Adam
@@ -12,6 +12,7 @@ tf.random.set_seed(123)
 def softmax_mod(x):
     return tf.sign(x) * (tf.exp(tf.abs(x)) - 1) / tf.expand_dims(
         tf.reduce_sum(tf.exp(tf.abs(x)) - 1, axis=1), axis=-1)
+
 
 class Trade_Model:
     def __init__(self, n_assets, batch_size, t_cost=0.0005):
@@ -25,7 +26,6 @@ class Trade_Model:
 
     def __build_model(self, input_shape, outputs):
 
-        # MODEL C
         inp = Input(shape=input_shape)
         l1 = LSTM(64, input_shape=input_shape, return_sequences=True)(inp)
         l1 = LSTM(64, input_shape=input_shape, return_sequences=False)(l1)
@@ -33,7 +33,8 @@ class Trade_Model:
         #l1 = Dropout(0.05)(l1)
         l1 = Flatten()(l1)
         l1 = Dense(outputs)(l1)
-        outp = Lambda(softmax_mod)(l1)
+        #outp = Softmax()(l1)
+        outp = Lambda(softmax_mod(l1))
         model = Model(inputs=inp, outputs=outp)
 
         def sharpe_loss(returns, y_pred):
